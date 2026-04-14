@@ -2,13 +2,14 @@
 
 C'est un projet de chat en Java nommé NajmaChat qu'on a fait avec une base de données MySQL.
 
-## Ce qu'il faut installer avant
+## Ce qu'il faut installer et avoir avant:
 
 - Docker 
 - Java 21
 - Maven 
+- Projet NajmaChat
 
-## Comment lancer le projet
+## Comment on peut lancer ce projet: 
 
 D'abord cloner le projet :
 git clone https://anydas.fr/l3/groupe-7.git
@@ -26,29 +27,29 @@ docker compose ps
 Pour arrêter :
 docker compose down
 
-## Lancer sans Docker
+## Comment lancer sans docker :
 
 Si vous voulez lancer sans Docker il faut d'abord importer la base de données :
 mysql -u root -p < sql/ChatApp_database.sql
 
-Ensuite compiler le projet :
+Ensuite il faut compiler le projet :
 mvn clean package -DskipTests
 
-Puis lancer le serveur :
+Puis effectuer le lancement du serveur :
 java -jar target/najma-server.jar
 
-## Lancer les tests
+## Comment lancer les tests:
 mvn test
 
-## Le pipeline CI/CD
+## Le pipeline CI/CD:
 
 Le pipeline se lance automatiquement à chaque push. Il fait dans l'ordre :
 - build : compile le projet et crée le jar
 - test : lance les tests unitaires
 - sast : vérifie la sécurité du code
-- publish : publie l'image Docker dans le registry (manuel sur main)
+- publish : publie l'image Docker dans le registry (se lance en manuel sur main)
 
-## Structure du projet
+## Structure de notre projet:
 
 - src/ : les sources Java
 - sql/ : le script de création de la base de données
