@@ -1,0 +1,71 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+
+stages:
+  - build
+  - test
+  - sast
+  - publish
+
+variables:
+  DOCKER_SNAPSHOT_IMAGE: "${CI_REGISTRY_IMAGE}/snapshot:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}"
+  DOCKER_RELEASE_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+cache:
+  key: "maven-$CI_COMMIT_REF_SLUG"
+  paths:
+    - .m2/repository/
+
+build:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/najma-server.jar
+    expire_in: 1 hour
+
+unit-tests:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - mvn test
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+sast:
+  stage: sast
+
+publish_release:
+  stage: publish
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+        --context "${CI_PROJECT_DIR}"
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+        --destination "${DOCKER_RELEASE_IMAGE}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+
+publish_snapshot:
+  stage: publish
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+        --context "${CI_PROJECT_DIR}"
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+        --destination "${DOCKER_SNAPSHOT_IMAGE}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual

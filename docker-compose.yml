@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:latest
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ChatApp
+    volumes:
+      - db-save:/var/lib/mysql
+    networks:
+      - najma_net
+
+  server:
+    image: registry.anydas.fr/l3/groupe-7:latest
+    container_name: server
+    restart: unless-stopped
+    ports:
+      - "12345:12345"
+    depends_on:
+      - db
+    networks:
+      - najma_net
+
+volumes:
+  db-save:
+
+networks:
+  najma_net:
